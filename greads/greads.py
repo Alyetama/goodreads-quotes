@@ -125,6 +125,15 @@ def export_quotes(fname: str, results: list) -> None:
     print(f'Saved results to {fname}...')
 
 
+def scrape(author, num_pages, enable_multiprocessing, language, output_file):
+    results = quotes_by_author(author=author,
+                               num_pages=num_pages,
+                               enable_multiprocessing=enable_multiprocessing)
+    clean_results = clean_text(results=results, language=language)
+    export_quotes(fname=output_file, results=clean_results)
+    return clean_results
+
+
 def opts() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument('-a',
@@ -158,12 +167,11 @@ def opts() -> argparse.Namespace:
 def main() -> list:
     signal.signal(signal.SIGINT, keyboard_interrupt_handler)
     args = opts()
-    results = quotes_by_author(
-        author=args.author,
-        num_pages=args.num_pages,
-        enable_multiprocessing=args.enable_multiprocessing)
-    clean_results = clean_text(results=results, language=args.language)
-    export_quotes(fname=args.output_file, results=clean_results)
+    clean_results = scrape(author=args.author,
+                           num_pages=args.num_pages,
+                           enable_multiprocessing=args.enable_multiprocessing,
+                           language=args.language,
+                           output_file=args.output_file)
     return clean_results
 
 
