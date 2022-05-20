@@ -13,11 +13,6 @@ from bs4 import BeautifulSoup, NavigableString  # noqa
 from langdetect.lang_detect_exception import LangDetectException
 from tqdm import tqdm
 
-try:
-    import ray
-except ModuleNotFoundError:
-    pass
-
 
 class UnknownPagesNum(Exception):
     pass
@@ -50,17 +45,6 @@ def get_quotes(pg_num: int, author: str) -> list:
     return quotes_in_page
 
 
-try:
-
-    @ray.remote
-    def _get_quotes(pg_num: int, author: str) -> list:
-        return get_quotes(pg_num, author)
-except NameError:
-    if '--enable-multiprocessing' in sys.argv:
-        raise ModuleNotFoundError('Multiprocessing requires `ray`! '
-                                  'Install with: `pip install ray`')
-
-
 def quotes_by_author(author,
                      num_pages: Optional[int] = None,
                      enable_multiprocessing: Optional[bool] = False) -> list:
@@ -90,12 +74,18 @@ def quotes_by_author(author,
 
     if enable_multiprocessing:
         try:
-            futures = [
-                _get_quotes.remote(q, author) for q in range(1, num_pages + 1)
-            ]
+            import ray
         except NameError:
             raise ModuleNotFoundError('Multiprocessing requires `ray`! '
                                       'Install with: `pip install ray`')
+
+        @ray.remote
+        def _get_quotes(pg_num: int, author: str) -> list:
+            return get_quotes(pg_num, author)
+
+        futures = [
+            _get_quotes.remote(q, author) for q in range(1, num_pages + 1)
+        ]
 
         results = [ray.get(q) for q in tqdm(futures)]
     else:
