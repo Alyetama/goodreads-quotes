@@ -55,8 +55,8 @@ try:
     def _get_quotes(pg_num: int, author: str) -> list:
         return get_quotes(pg_num, author)
 except NameError:
-    print('Multiprocessing requires `ray`!'
-          'Install with: `pip install ray`')
+    raise ModuleNotFoundError('Multiprocessing requires `ray`! '
+        'Install with: `pip install ray`')
 
 def quotes_by_author(author,
                      num_pages: Optional[int] = None,
