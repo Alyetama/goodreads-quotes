@@ -125,7 +125,11 @@ def export_quotes(fname: str, results: list) -> None:
     print(f'Saved results to {fname}...')
 
 
-def scrape(author, num_pages, enable_multiprocessing, language, output_file):
+def scrape(author,
+           num_pages=None,
+           enable_multiprocessing=False,
+           language='en',
+           output_file='quotes.json'):
     results = quotes_by_author(author=author,
                                num_pages=num_pages,
                                enable_multiprocessing=enable_multiprocessing)
