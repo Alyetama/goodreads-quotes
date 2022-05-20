@@ -51,12 +51,15 @@ def get_quotes(pg_num: int, author: str) -> list:
 
 
 try:
+
     @ray.remote
     def _get_quotes(pg_num: int, author: str) -> list:
         return get_quotes(pg_num, author)
 except NameError:
-    raise ModuleNotFoundError('Multiprocessing requires `ray`! '
-        'Install with: `pip install ray`')
+    if '--enable-multiprocessing' in sys.argv:
+        raise ModuleNotFoundError('Multiprocessing requires `ray`! '
+                                  'Install with: `pip install ray`')
+
 
 def quotes_by_author(author,
                      num_pages: Optional[int] = None,
@@ -86,9 +89,14 @@ def quotes_by_author(author,
                                   'pages! Pass it as an option: `--pages-num`')
 
     if enable_multiprocessing:
-        futures = [
-            _get_quotes.remote(q, author) for q in range(1, num_pages + 1)
-        ]
+        try:
+            futures = [
+                _get_quotes.remote(q, author) for q in range(1, num_pages + 1)
+            ]
+        except NameError:
+            raise ModuleNotFoundError('Multiprocessing requires `ray`! '
+                                      'Install with: `pip install ray`')
+
         results = [ray.get(q) for q in tqdm(futures)]
     else:
         results = [
